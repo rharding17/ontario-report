@@ -1,0 +1,112 @@
+---
+title: "Lake Ontario_Harding"
+author: "Riley Harding"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This is a brief report on the microbial abundance in Lake Ontario and the possible explanatory variables for the perceived fluctuation in their abundance temporally.
+
+### Load required packages:
+
+```{r packages, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(harrypotter)
+library(ggpubr)
+library(knitr)
+```
+
+### Load dataframe
+
+```{r dataframe, message=FALSE, warning=FALSE}
+sample_and_taxon <- read_csv("~/OneDrive/Documents/Cornell Grad School/Graduate Classes/Workshops/2025_Carpentries_Coding/ontario-report/data/sample_and_taxon.csv")
+
+buoy_data<-read_csv("~/OneDrive/Documents/Cornell Grad School/Graduate Classes/Workshops/2025_Carpentries_Coding/ontario-report/data/buoy_data.csv")
+```
+
+This dataframe was created by merging two dataframes together with R base function inner join.
+
+Now we would like to explore what is impacting microbial abundance in Lake Ontario.
+
+```{r explore}
+sample_and_taxon %>% 
+ggplot()+
+  aes(x = temperature, 
+      y = cells_per_ml/1000000,
+      color = env_group,
+      size = chlorophyll,
+      shape = env_group)+
+  geom_point()+
+  labs(x = "Temperature (°C)", 
+       y = "Cell Abundance (millions/mL)", 
+       title = "What Influences Microbial Abundance in Lake Ontario",
+       size = "Chlorophyll (ug/L)",
+       color = "Environmental Group",
+       shape = "Environmental Group")
+```
+
+From this figure, there seems to be an influence of depth and temperature on the relative abundance of microbial organisms. 
+
+Next, let's look at another dataset that summarizes lake temperatures from four buoys across Lake Ontario.
+
+
+```{r buoy plot}
+buoy_data %>% 
+  ggplot()+
+  aes(x = day_of_year,
+      y = temperature,
+      color = depth,
+      group = sensor)+
+  geom_line()+
+  facet_wrap(~buoy, scales = "free_y")+
+  labs(x = "Day of the Year (Julian)",
+       y = "Temperature (°C)",
+       color = "Lake Depth (m)",
+       title = "Buoy Temperature Data Across Lake Ontario")
+```
+
+There appears to be differences in the distribution of lake temperatures among the four buoys. This is partially explained by the limnology, shape and depth of Lake Ontario. 
+
+Let's also explore 
+```{r hp plots}
+sample_and_taxon %>% 
+ggplot()+
+  aes(x = env_group,
+      y = cells_per_ml)+
+  geom_boxplot(aes(fill = env_group))+
+  scale_fill_hp_d(option = "LunaLovegood", name = "Depth")+
+  labs(x = "Environmental Group",
+       y = "Microbial Abundance",
+       title = "Impact of Environmental Group on Microbial Abundance")+
+  stat_compare_means(method = "anova", label.y = 40)+     
+  stat_compare_means(label = "p.signif", method = "t.test",ref.group = "0.5")
+```
+
+There appears to be significant differences between environmental groups.
+
+This last data summary is a table looking at taxon Chloroflexi by environmental groups.
+
+```{r figures}
+sample_and_taxon %>% 
+  group_by(env_group) %>% 
+  summarise(avg_abundance = mean(Chloroflexi),
+            std_dev = sd(Chloroflexi, na.rm = TRUE)) %>% 
+  kable()
+
+```
+
+
+
+
+
+
+
+
